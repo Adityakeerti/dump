@@ -14,6 +14,6 @@ error_code_not_found: 404
 error_code_bad_request: 400
 error_code_conflict: 409
 rehearsal_endpoint_path: "/rehearsal"
-jobs_endpoint_path: "/jobs"
-situation_endpoint_path: "/situations"
+jobs_endpoint_path: "/jobs/{job_id}"
+situation_endpoint_path: "/situations/{job_id}"
 health_endpoint_path: "/health"
