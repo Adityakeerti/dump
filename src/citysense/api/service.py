@@ -75,7 +75,7 @@ def run_rehearsal_pipeline(
     tracer = ShockwaveTracer(cfg.engine, cfg.diagnosis)
     origin = None
     if clusters:
-        primary = max(clusters, key=lambda c: len(c.cell_ids))
+        primary = max(clusters, key=lambda c: c.head_cell)
         origin = tracer.trace_origin(primary, all_obs, cfg.network.min_cell_length)
 
     # 6. Capacity fitting

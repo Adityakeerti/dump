@@ -242,6 +242,7 @@ class DiagnosisConfig(StrictBaseModel):
     barchart_alpha: float
     barchart_capsize: float
     zorder_overlay: int
+    bottleneck_search_radius_cells: int
     simulated_banner_text: str
     status_ok: str
     status_fail: str

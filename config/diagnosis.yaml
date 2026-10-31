@@ -72,6 +72,7 @@ jam_contour_levels: 5
 barchart_alpha: 0.8
 barchart_capsize: 5.0
 zorder_overlay: 5
+bottleneck_search_radius_cells: 3
 simulated_banner_text: "[SIMULATED TWIN EVIDENCE]"
 status_ok: "PASS"
 status_fail: "FAIL"

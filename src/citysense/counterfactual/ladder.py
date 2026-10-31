@@ -88,10 +88,13 @@ class CounterfactualLadder:
             )
             baseline_vhs.append(vh_base)
 
-            # 2. Rung: restore_capacity at suspect cell
+            # 2. Rung: restore_capacity at suspect cell (searching within bottleneck_search_radius_cells downstream)
             engine.restore(snapshot)
+            radius = self.diag_cfg.bottleneck_search_radius_cells
             cleared_windows = [
-                w for w in engine.snapshot().capacity_windows if suspect_cell not in w.cell_ids
+                w
+                for w in engine.snapshot().capacity_windows
+                if not any(0 <= (c - suspect_cell) <= radius for c in w.cell_ids)
             ]
             snap_cleared = copy.deepcopy(engine.snapshot())
             snap_cleared.capacity_windows = cleared_windows
