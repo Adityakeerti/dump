@@ -234,6 +234,7 @@ class NativeCTMEngine(EngineAdapter):
             signal_phases=copy.deepcopy(self.signal_phases),
             signal_timers=copy.deepcopy(self.signal_timers),
             capacity_windows=copy.deepcopy(self.capacity_windows),
+            entrance_buffer=self.entrance_buffer.copy(),
             rng_state=copy.deepcopy(self.rng.bit_generator.state),
         )
 
@@ -246,7 +247,7 @@ class NativeCTMEngine(EngineAdapter):
         self.step_count = snapshot.state.step_count
         self.total_entered = snapshot.state.total_entered
         self.total_exited = snapshot.state.total_exited
-        self.entrance_buffer.fill(0.0)
+        self.entrance_buffer = snapshot.entrance_buffer.copy()
         self.signal_phases = copy.deepcopy(snapshot.signal_phases)
         self.signal_timers = copy.deepcopy(snapshot.signal_timers)
         self.capacity_windows = copy.deepcopy(snapshot.capacity_windows)

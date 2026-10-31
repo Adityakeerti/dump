@@ -45,4 +45,5 @@ class EngineSnapshot:
     signal_phases: dict[int, int]
     signal_timers: dict[int, float]
     capacity_windows: list[CapacityFactorWindow]
+    entrance_buffer: np.ndarray
     rng_state: Any
