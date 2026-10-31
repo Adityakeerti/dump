@@ -239,6 +239,9 @@ class DiagnosisConfig(StrictBaseModel):
     figure_height_ladder: int
     origin_marker_size: int
     jam_contour_levels: int
+    barchart_alpha: float
+    barchart_capsize: float
+    zorder_overlay: int
     simulated_banner_text: str
     status_ok: str
     status_fail: str

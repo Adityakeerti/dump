@@ -69,6 +69,9 @@ figure_width_ladder: 8
 figure_height_ladder: 5
 origin_marker_size: 100
 jam_contour_levels: 5
+barchart_alpha: 0.8
+barchart_capsize: 5.0
+zorder_overlay: 5
 simulated_banner_text: "[SIMULATED TWIN EVIDENCE]"
 status_ok: "PASS"
 status_fail: "FAIL"
