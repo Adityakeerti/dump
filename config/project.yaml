@@ -1,0 +1,10 @@
+project_name: "CitySense Traffic"
+version: "0.1.0"
+max_fix_attempts: 5
+seed: 42
+recon_file_path: "docs/engine_recon.md"
+decisions_file_path: "docs/decisions.md"
+tolerances_file_path: "tests/tolerances.yaml"
+ground_truth_dir: "ground_truth"
+reports_dir: "reports"
+config_dir: "config"

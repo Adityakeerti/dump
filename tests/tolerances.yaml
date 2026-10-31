@@ -1,0 +1,45 @@
+conservation:
+  value: 0.0001
+  justification: "Numerical rounding error accumulation over discrete CTM flow updates"
+fd_r2:
+  value: 0.98
+  justification: "Minimum R-squared correlation matching triangular fundamental diagram"
+shockwave_speed_relative_error:
+  value: 0.08
+  justification: "Spatial-temporal discretization grid discretization error on backward wave speed"
+capacity_drop_flow_reduction:
+  value: 0.15
+  justification: "Minimum flow drop required to confirm planted capacity drop versus control"
+dropout_tolerance:
+  value: 0.05
+  justification: "Statistical fluctuation tolerance for empirical Bernoulli sensor dropout"
+noise_std_tolerance:
+  value: 0.05
+  justification: "Empirical standard deviation tolerance for Gaussian sensor noise"
+jam_precision_min:
+  value: 0.80
+  justification: "Minimum precision for spatio-temporal DBSCAN jam cluster detection"
+jam_recall_min:
+  value: 0.80
+  justification: "Minimum recall for spatio-temporal DBSCAN jam cluster detection"
+false_alarm_max:
+  value: 0.05
+  justification: "Maximum allowable false alarm rate on control scenarios without jams"
+origin_cell_tolerance:
+  value: 2
+  justification: "Maximum allowable cell offset in shockwave back-tracing origin localization"
+capacity_ratio_tolerance:
+  value: 0.10
+  justification: "Allowable estimation error on recovered versus planted capacity ratio"
+counterfactual_recovery_tolerance:
+  value: 0.15
+  justification: "Interval tolerance for vehicle-hours recovered under counterfactual interventions"
+calibration_bound_max:
+  value: 0.30
+  justification: "Strict upper bound preventing catastrophic drift during calibration updates"
+outcome_tracker_coverage:
+  value: 0.85
+  justification: "Target coverage rate for observed recovery falling inside predicted intervals"
+built_in_test_steps:
+  value: 10
+  justification: "Step count for Module 0 built-in scenario smoke test"
