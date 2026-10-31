@@ -198,9 +198,11 @@ class NativeCTMEngine(EngineAdapter):
 
         # Compute per-cell flow and speed
         self.flow = out_transfer / (self.dt * self.lanes)
-        denom = np.maximum(self.density, self.config.density_epsilon)
-        raw_speed = self.flow / denom
-        self.speed = np.minimum(raw_speed, self.vf)
+        self.speed = np.full(self.n_cells, self.config.free_flow_speed, dtype=np.float64)
+        has_density = self.density > self.config.density_epsilon
+        if np.any(has_density):
+            raw_speed = self.flow[has_density] / self.density[has_density]
+            self.speed[has_density] = np.minimum(raw_speed, self.vf[has_density])
 
         self.time_sec += self.dt
         self.step_count += 1
