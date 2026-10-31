@@ -1,5 +1,5 @@
 congestion_speed_factor: 0.6
-dbscan_eps: 25.0
+dbscan_eps: 3.0
 dbscan_min_samples: 3
 spatial_scale_m: 15.0
 temporal_scale_s: 5.0

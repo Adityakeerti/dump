@@ -196,13 +196,19 @@ class NativeCTMEngine(EngineAdapter):
         lane_length = self.length * self.lanes
         self.density = self.vehicles / lane_length
 
-        # Compute per-cell flow and speed
+        # Compute per-cell flow and speed from fundamental diagram
         self.flow = out_transfer / (self.dt * self.lanes)
-        self.speed = np.full(self.n_cells, self.config.free_flow_speed, dtype=np.float64)
-        has_density = self.density > self.config.density_epsilon
-        if np.any(has_density):
-            raw_speed = self.flow[has_density] / self.density[has_density]
-            self.speed[has_density] = np.minimum(raw_speed, self.vf[has_density])
+        kc = q_eff / self.vf
+        congested_mask = self.density > kc
+        self.speed = self.vf.copy()
+        if np.any(congested_mask):
+            cong_speed = (
+                self.w[congested_mask]
+                * (self.kj[congested_mask] - self.density[congested_mask])
+                / np.maximum(self.density[congested_mask], self.config.density_epsilon)
+            )
+            cong_speed = np.clip(cong_speed, 0.0, self.config.free_flow_speed)
+            self.speed[congested_mask] = cong_speed
 
         self.time_sec += self.dt
         self.step_count += 1
