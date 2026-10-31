@@ -1,0 +1,11 @@
+base_flow_veh_per_sec: 0.35
+peak_flow_veh_per_sec: 0.75
+peak_start_sec: 300.0
+peak_end_sec: 900.0
+peak_shift_sec: 300.0
+simulation_duration_sec: 1800.0
+weekday_factor: 1.0
+weekend_factor: 0.6
+warmup_duration_sec: 120.0
+cooldown_duration_sec: 120.0
+cross_street_flow_factor: 0.3

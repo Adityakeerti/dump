@@ -1,0 +1,19 @@
+host: "127.0.0.1"
+port: 8000
+timeout_seconds: 60.0
+max_concurrent_jobs: 4
+job_retention_seconds: 3600.0
+status_poll_interval_seconds: 0.5
+api_title: "CitySense Traffic Service API"
+api_version: "1.0.0"
+api_description: "Asynchronous Rehearsal and Root Cause Diagnosis API for Traffic Twin"
+job_queue_poll_sleep_sec: 0.05
+concurrent_rehearsal_batch_size: 2
+default_query_limit: 50
+error_code_not_found: 404
+error_code_bad_request: 400
+error_code_conflict: 409
+rehearsal_endpoint_path: "/rehearsal"
+jobs_endpoint_path: "/jobs"
+situation_endpoint_path: "/situations"
+health_endpoint_path: "/health"

@@ -1,0 +1,34 @@
+seed: 42
+algorithm: "DoubleDQN"
+learning_rate: 0.0005
+gamma: 0.95
+batch_size: 32
+buffer_capacity: 5000
+target_update_interval: 100
+epsilon_start: 1.0
+epsilon_end: 0.05
+epsilon_decay: 0.99
+total_training_steps: 200
+eval_episodes: 5
+queue_norm_factor: 20.0
+reward_queue_weight: -1.0
+reward_worst_approach_weight: -2.0
+shield_min_green_sec: 5.0
+shield_max_cycle_sec: 120.0
+shield_yellow_sec: 3.0
+shield_all_red_sec: 2.0
+hidden_dim: 64
+checkpoint_filename: "rl_model_checkpoint.pt"
+baseline_algorithms:
+  - "fixed-time"
+  - "longest-queue"
+  - "max-pressure"
+action_keep: 0
+action_switch: 1
+evaluation_steps: 120
+smoke_train_steps: 20
+num_phases_per_junction: 2
+state_feature_dim_per_approach: 1
+state_extra_dim: 3
+checkpoint_metadata_format: "canonical_json"
+action_space_size: 2

@@ -1,0 +1,19 @@
+name: "creeping_capacity_drop"
+scenario_type: "creeping_capacity_drop"
+description: "Progressive degradation of effective capacity over successive time periods"
+start_time_sec: 200.0
+end_time_sec: 1800.0
+target_cell_id: 12
+upstream_junction_cell_id: -1
+capacity_factor: 0.35
+demand_shift_sec: 0.0
+decay_rate_per_step: 0.0005
+recurring_weekdays:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+recurring_hours:
+  - 12
+ground_truth_filename: "creeping_capacity_drop_ground_truth.json"

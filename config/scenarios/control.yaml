@@ -1,0 +1,13 @@
+name: "control"
+scenario_type: "control"
+description: "Control baseline with no planted disruptions or capacity reductions"
+start_time_sec: 0.0
+end_time_sec: 1800.0
+target_cell_id: -1
+upstream_junction_cell_id: -1
+capacity_factor: 1.0
+demand_shift_sec: 0.0
+decay_rate_per_step: 0.0
+recurring_weekdays: []
+recurring_hours: []
+ground_truth_filename: "control_ground_truth.json"

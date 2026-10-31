@@ -1,0 +1,19 @@
+name: "demand_peak_shift"
+scenario_type: "demand_peak_shift"
+description: "Temporal shift of peak demand profile causing unexpected upstream surge"
+start_time_sec: 150.0
+end_time_sec: 750.0
+target_cell_id: 0
+upstream_junction_cell_id: -1
+capacity_factor: 1.0
+demand_shift_sec: 450.0
+decay_rate_per_step: 0.0
+recurring_weekdays:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+recurring_hours:
+  - 8
+ground_truth_filename: "demand_peak_shift_ground_truth.json"

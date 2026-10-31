@@ -1,0 +1,18 @@
+corridor_name: "Metropolitan Corridor"
+center_lat: 37.7749
+center_lon: -122.4194
+radius_m: 1000.0
+bbox_north: 37.7800
+bbox_south: 37.7700
+bbox_east: -122.4100
+bbox_west: -122.4300
+num_signalized_junctions: 5
+num_cells_per_link: 8
+lanes: 2
+default_free_flow_speed: 13.89
+default_capacity: 0.5
+default_jam_density: 0.15
+default_wave_speed: 5.56
+signal_cycle_time: 60.0
+green_fraction: 0.5
+min_cell_length: 15.0

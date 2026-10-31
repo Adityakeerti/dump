@@ -1,0 +1,78 @@
+congestion_speed_factor: 0.6
+dbscan_eps: 25.0
+dbscan_min_samples: 3
+spatial_scale_m: 15.0
+temporal_scale_s: 5.0
+wave_speed_theoretical_mps: 5.56
+wave_speed_tolerance_mps: 1.5
+capacity_fit_min_samples: 10
+change_point_penalty: 2.0
+change_point_min_size: 5
+confidence_min: 0.1
+confidence_max: 0.99
+hypothesis_weights:
+  capacity_drop: 0.4
+  demand_shift: 0.3
+  signal_fault: 0.3
+calibration_learning_rate: 0.05
+counterfactual_replicates: 5
+counterfactual_perturbation_std: 0.05
+counterfactual_noise_floor_vhr: 0.01
+responsible_party_capacity: "Department of Transportation / Maintenance"
+responsible_party_demand: "Transit and Traffic Operations Authority"
+responsible_party_signal: "Traffic Signal Operations"
+action_template_capacity: "Deploy road maintenance crew to inspect and clear constriction at Cell {cell_id}."
+action_template_demand: "Retime corridor boundary metering and advise alternate routes for peak demand surge."
+action_template_signal: "Adjust signal coordination and phase splits at Junction {junction_id}."
+action_template_control: "Maintain standard baseline operations; no structural bottleneck detected."
+default_status: "PROPOSED"
+simulation_tag: "SIMULATED"
+recurrent_jam_day_threshold: 2
+single_day_jam_day_count: 1
+evaluation_k_seeds: 3
+creeping_delay_allowed_steps: 400
+change_point_min_drop_ratio: 0.1
+output_dir_key: "outputs"
+ladder_ranking_order:
+  - "restore_capacity"
+  - "demand_peak_shift"
+  - "rl_signal_control"
+top_ranked_name_capacity: "restore_capacity"
+top_ranked_name_signal: "rl_signal_control"
+top_ranked_name_demand: "demand_peak_shift"
+top_ranked_name_control: "none"
+cause_name_recurring: "recurring_capacity_drop"
+cause_name_creeping: "creeping_capacity_drop"
+cause_name_demand_shift: "demand_peak_shift"
+cause_name_spillback: "downstream_spillback"
+cause_name_control: "control"
+evidence_min_count: 1
+ladder_min_recovery_diff: 0.05
+spillback_recovery_margin: 0.1
+min_control_max_recovery: 0.02
+calibration_max_step_bound: 0.3
+initial_calibration_weight: 1.0
+min_calibrated_weight: 0.1
+max_calibrated_weight: 2.0
+outcome_target_coverage_rate: 0.85
+ladder_noise_threshold: 0.05
+ladder_spillback_diff_threshold: 0.1
+report_html_filename: "report.html"
+heatmap_png_filename: "speed_heatmap.png"
+ladder_png_filename: "hypothesis_ranking.png"
+final_results_filename: "final_results.md"
+summary_title: "CitySense Traffic Automated Diagnostic Report"
+figure_dpi: 150
+figure_width_heatmap: 12
+figure_height_heatmap: 6
+figure_width_ladder: 8
+figure_height_ladder: 5
+origin_marker_size: 100
+jam_contour_levels: 5
+simulated_banner_text: "[SIMULATED TWIN EVIDENCE]"
+status_ok: "PASS"
+status_fail: "FAIL"
+status_pending: "PENDING"
+status_running: "RUNNING"
+status_completed: "COMPLETED"
+status_error: "ERROR"
