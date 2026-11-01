@@ -16,6 +16,9 @@ from citysense.network.corridor import build_corridor_network
 from citysense.network.demand import CorridorDemand
 from citysense.observation.generator import ObservationGenerator
 from citysense.rl.dqn import DoubleDQNAgent
+from citysense.rl.train import train_dqn
+from citysense.config.units import METERS_PER_KM
+from citysense.network.corridor import source_demand_weights
 from citysense.rl.env import CorridorSignalEnv
 from citysense.rl.eval import PolicyEvaluationResult, evaluate_policy_suite
 from citysense.scenarios.registry import create_scenario
@@ -217,11 +220,17 @@ class SuiteEvaluator:
         # Evaluate RL Policy suite
         sample_net = build_corridor_network(self.cfg.network, seed=self.cfg.project.seed)
         sample_dem = CorridorDemand(self.cfg.demand)
+        # Signals must gate flow for a policy comparison to mean anything: without signal_controlled_cells
+        # every controller produced identical queues.
         sample_eng = NativeCTMEngine(
             config=self.cfg.engine,
             n_cells=sample_net.n_cells,
             upstream_cells=sample_net.upstream_cells,
             downstream_cells=sample_net.downstream_cells,
+            lanes=sample_net.lanes,
+            cell_length=sample_net.cell_length,
+            signal_controlled_cells=sample_net.signal_controlled_cells,
+            source_demand_weights=source_demand_weights(sample_net, self.cfg.demand.cross_street_flow_factor),
         )
         env = CorridorSignalEnv(
             engine=sample_eng,
@@ -234,6 +243,8 @@ class SuiteEvaluator:
             self.cfg.rl,
             env.obs_dim_per_junction,
         )
+        # Train the agent for the configured budget before comparing it (it was evaluated untrained).
+        train_dqn(env, agent, self.cfg.rl.total_training_steps, self.cfg.project.seed)
         steps = int(self.cfg.demand.simulation_duration_sec / self.cfg.engine.dt)
         policy_results = evaluate_policy_suite(
             env=env,
@@ -308,6 +319,14 @@ class SuiteEvaluator:
         valid_origs = [mean_orig[s] for s in ("recurring_capacity_drop", "creeping_capacity_drop", "downstream_spillback") if mean_orig.get(s) is not None]
         avg_orig_err = float(np.mean(valid_origs)) if valid_origs else 0.0
 
+        net_cfg = self.cfg.network
+        n_art = (net_cfg.num_signalized_junctions + 1) * net_cfg.num_cells_per_link
+        legs = net_cfg.cross_street_legs
+        corridor_line = (
+            f"{net_cfg.num_signalized_junctions} signalized junctions ({legs} side-road leg(s) each), "
+            f"{n_art} arterial cells of {net_cfg.min_cell_length:g} m, "
+            f"{n_art * net_cfg.min_cell_length / METERS_PER_KM:.2f} km arterial length."
+        )
         content = f"""# Final Evaluation Results: CitySense Traffic Twin
 
 > {banner}
@@ -315,7 +334,7 @@ class SuiteEvaluator:
 > RL is evaluated as an adaptive signal control benchmark within the counterfactual ladder, not as an oracle root-cause classifier.
 
 ## 1. Executive Summary
-- **Simulated Corridor:** 3 signalized arterial junctions, 20 discrete 20m cells, 0.4km corridor length.
+- **Simulated Corridor:** {corridor_line}
 - **Config Hash:** `{self.config_hash}`
 - **Scenario Suite:** 5 registered scenarios evaluated across {self.cfg.diagnosis.evaluation_k_seeds} seeded replicates.
 - **Root-Cause Identification:** {overall_acc:.1f}% correct top-ranked cause rate across all scenarios and seeds.

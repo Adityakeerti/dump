@@ -68,7 +68,7 @@ def evaluate_policy_suite(
                 for j in range(num_j):
                     j_cells = env.network.junction_cells[j]
                     art_q = float(s.queue[j_cells["arterial_approach"]])
-                    cross_q = float(s.queue[j_cells["cross_approach"]])
+                    cross_q = float(sum(s.queue[c] for c in j_cells.get("cross_approaches", [j_cells["cross_approach"]])))
                     curr_phase = env.shield.states[j].current_phase
 
                     if pol == "DoubleDQN":

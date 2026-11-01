@@ -112,9 +112,16 @@ class CounterfactualLadder:
             # 3. Rung: demand_peak_shift (retime peak surge)
             engine.restore(snapshot)
 
-            def shifted_demand(t: float, m=mult) -> float:
-                shift = base_demand.config.peak_shift_sec
-                return base_demand.get_rate(t - shift) * m
+            # Retime only the peak window (CorridorDemand's peak_shift_sec). Shifting the whole curve,
+            # get_rate(t - shift), also delayed the warm-up and produced negative demand for t < shift.
+            retimed = CorridorDemand(
+                base_demand.config,
+                is_weekend=base_demand.is_weekend,
+                peak_shift_sec=base_demand.peak_shift_sec + base_demand.config.peak_shift_sec,
+            )
+
+            def shifted_demand(t: float, m=mult, d=retimed) -> float:
+                return d.get_rate(t) * m
 
             vh_demand_shift = self._compute_congestion_hours(
                 engine=engine,

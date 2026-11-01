@@ -51,13 +51,17 @@ class ObservationGenerator:
             )
 
             true_flow = float(state.flow[cell_id])
-            noisy_flow = max(0.0, true_flow + noise * self.config.noise_std * 0.0)
+            # Previously `true_flow + noise * noise_std * 0.0` and then the exact flow was reported: flows were
+            # noiseless. Relative noise; drawn only when configured so the speed-noise stream is unchanged otherwise.
+            noisy_flow = true_flow
+            if self.config.flow_noise_rel > 0.0:
+                noisy_flow = max(0.0, true_flow * (1.0 + float(self.rng.normal(0.0, self.config.flow_noise_rel))))
 
             rec = ObservationRecord(
                 cell_id=cell_id,
                 timestamp_sec=state.time_sec,
                 speed_mps=clamped_speed,
-                flow_vps=true_flow,
+                flow_vps=noisy_flow,
                 density_vpm=float(state.density[cell_id]),
                 source=self.config.default_simulated_source,
                 simulated=self.config.simulated_flag,

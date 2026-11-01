@@ -18,6 +18,7 @@ class CapacityFitResult:
     confidence_interval: tuple[float, float]
     change_points: list[float]
     significant_drop_detected: bool
+    identifiable: bool = True
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -32,6 +33,7 @@ class CapacityFitResult:
             ],
             "change_points": self.change_points,
             "significant_drop_detected": self.significant_drop_detected,
+            "identifiable": self.identifiable,
         }
 
 
@@ -51,11 +53,20 @@ class CapacityEstimator:
         t_start = time_window[0]
         t_end = time_window[1]
 
-        # Filter observations for cell and window
+        # Capacity is only observable while traffic is queued at or just upstream of the cell (then flow equals
+        # the cell's discharge capacity). In free flow, flow < capacity says nothing about capacity, so readings
+        # are kept only at report times when this cell or an upstream cell within bottleneck_search_radius_cells is
+        # congested (several cells, because sensor coverage is partial).
+        slow = self.diag_cfg.congestion_speed_factor * self.engine_cfg.free_flow_speed
+        congested_at = {
+            r.timestamp_sec
+            for r in observations
+            if cell_id - self.diag_cfg.bottleneck_search_radius_cells <= r.cell_id <= cell_id and r.speed_mps < slow and t_start <= r.timestamp_sec <= t_end
+        }
         cell_obs = [
             r
             for r in observations
-            if r.cell_id == cell_id and t_start <= r.timestamp_sec <= t_end
+            if r.cell_id == cell_id and t_start <= r.timestamp_sec <= t_end and r.timestamp_sec in congested_at
         ]
 
         nom_cap = float(self.engine_cfg.capacity)
@@ -69,6 +80,7 @@ class CapacityEstimator:
                 confidence_interval=(1.0, 1.0),
                 change_points=[],
                 significant_drop_detected=False,
+                identifiable=False,
             )
 
         flows = np.array([r.flow_vps for r in cell_obs], dtype=np.float64)
@@ -120,9 +132,11 @@ class CapacityEstimator:
         penalty = self.diag_cfg.change_point_penalty
         drop_threshold = nominal_capacity * self.diag_cfg.change_point_min_drop_ratio
 
-        # Determine baseline from initial window
-        initial_flows = [r.flow_vps for r in sorted_obs[: self.diag_cfg.change_point_min_size]]
-        baseline = float(np.median(initial_flows)) if initial_flows else nominal_capacity
+        # Baseline from the initial segment's upper half: a cell far from the entry is still filling (flow ramping
+        # up) right after warm-up, and a plain median of the first readings would set the baseline too low.
+        head = [r.flow_vps for r in sorted_obs[: self.diag_cfg.change_point_min_size * 2]]
+        upper = sorted(head)[len(head) // 2 :] if head else []
+        baseline = float(np.median(upper)) if upper else nominal_capacity
 
         for obs in sorted_obs:
             flow_deficit = baseline - obs.flow_vps

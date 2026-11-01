@@ -30,7 +30,7 @@ class CorridorNetwork:
     kj: np.ndarray
     q_nom: np.ndarray
     signal_controlled_cells: dict[int, tuple[int, int]]
-    junction_cells: dict[int, dict[str, int]]
+    junction_cells: dict[int, dict[str, Any]]
     arterial_cells: list[int]
     cross_street_cells: list[int]
     metadata: CorridorMetadata
@@ -42,6 +42,8 @@ def build_corridor_network(config: NetworkConfig, seed: int) -> CorridorNetwork:
 
     num_junctions = config.num_signalized_junctions
     cells_per_link = config.num_cells_per_link
+    legs = config.cross_street_legs
+    cells_per_leg = config.cross_cells_per_leg or cells_per_link
     lanes_val = config.lanes
 
     # Sample link parameters from config ranges and label as assumptions
@@ -59,14 +61,16 @@ def build_corridor_network(config: NetworkConfig, seed: int) -> CorridorNetwork:
         "sampled_q_nominal": q_base,
         "seed": seed,
         "signal_phase_count": 2,
+        "cross_street_legs": legs,
+        "cells_per_leg": cells_per_leg,
     }
 
     # Number of arterial segments = num_junctions + 1 (entry, intermediate links, exit)
     num_segments = num_junctions + 1
     total_arterial_cells = num_segments * cells_per_link
 
-    # Each junction has a cross street of cells_per_link cells
-    total_cross_cells = num_junctions * cells_per_link
+    # Each junction has `legs` side roads (2 = four-way intersection) of cells_per_leg cells each
+    total_cross_cells = num_junctions * legs * cells_per_leg
     total_cells = total_arterial_cells + total_cross_cells
 
     upstream = np.full(total_cells, -1, dtype=np.int64)
@@ -93,22 +97,23 @@ def build_corridor_network(config: NetworkConfig, seed: int) -> CorridorNetwork:
     # Phase 0 = arterial green, Phase 1 = cross-street green
     for j in range(num_junctions):
         arterial_approach = (j + 1) * cells_per_link - 1
-        cross_start = total_arterial_cells + j * cells_per_link
-        cross_end = cross_start + cells_per_link
-
-        # Link cross street cells
-        for c in range(cross_start, cross_end - 1):
-            downstream[c] = c + 1
-            upstream[c + 1] = c
-
-        cross_approach = cross_end - 1
-
         signal_controlled_cells[arterial_approach] = (j, 0)
-        signal_controlled_cells[cross_approach] = (j, 1)
+        approaches: list[int] = []
+        for leg in range(legs):
+            cross_start = total_arterial_cells + (j * legs + leg) * cells_per_leg
+            cross_end = cross_start + cells_per_leg
+            # Link cross street cells
+            for c in range(cross_start, cross_end - 1):
+                downstream[c] = c + 1
+                upstream[c + 1] = c
+            cross_approach = cross_end - 1
+            signal_controlled_cells[cross_approach] = (j, 1)
+            approaches.append(cross_approach)
 
         junction_cells[j] = {
             "arterial_approach": arterial_approach,
-            "cross_approach": cross_approach,
+            "cross_approach": approaches[0],
+            "cross_approaches": approaches,
         }
 
     meta = CorridorMetadata(
@@ -137,3 +142,19 @@ def build_corridor_network(config: NetworkConfig, seed: int) -> CorridorNetwork:
         cross_street_cells=cross_street_cells,
         metadata=meta,
     )
+
+
+def cross_leg_cells(net: CorridorNetwork, junction: int, leg: int) -> list[int]:
+    """Ordered cells (entry first, stop line last) of one side-road leg of a junction."""
+    approach = net.junction_cells[junction]["cross_approaches"][leg]
+    n = int(net.metadata.assumptions["cells_per_leg"])
+    return list(range(approach - n + 1, approach + 1))
+
+
+def source_demand_weights(net: CorridorNetwork, cross_street_flow_factor: float) -> np.ndarray:
+    """Demand multiplier per source cell: 1 for the arterial gateway, the configured factor for side roads."""
+    w = np.ones(net.n_cells, dtype=np.float64)
+    for c in net.cross_street_cells:
+        if net.upstream_cells[c] < 0:
+            w[c] = cross_street_flow_factor
+    return w

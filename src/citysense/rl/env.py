@@ -54,10 +54,10 @@ class CorridorSignalEnv:
         for j in range(self.num_junctions):
             j_cells = self.network.junction_cells[j]
             art_c = j_cells["arterial_approach"]
-            cross_c = j_cells["cross_approach"]
+            cross_cs = j_cells.get("cross_approaches", [j_cells["cross_approach"]])
 
             art_q = float(s.queue[art_c]) / norm
-            cross_q = float(s.queue[cross_c]) / norm
+            cross_q = float(sum(s.queue[c] for c in cross_cs)) / norm
 
             sh_state = self.shield.states[j]
             phase_val = float(sh_state.current_phase)
@@ -114,7 +114,7 @@ class CorridorSignalEnv:
         for j in range(self.num_junctions):
             j_cells = self.network.junction_cells[j]
             queues.append(float(state.queue[j_cells["arterial_approach"]]))
-            queues.append(float(state.queue[j_cells["cross_approach"]]))
+            queues.append(float(sum(state.queue[c] for c in j_cells.get("cross_approaches", [j_cells["cross_approach"]]))))
 
         total_q = float(np.sum(queues))
         worst_q = float(np.max(queues)) if queues else 0.0

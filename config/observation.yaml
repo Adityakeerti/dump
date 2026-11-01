@@ -2,6 +2,7 @@ coverage_fraction: 0.8
 reporting_interval_sec: 5.0
 noise_type: "gaussian"
 noise_std: 0.5
+flow_noise_rel: 0.1
 dropout_fraction: 0.05
 min_reported_speed_mps: 0.0
 max_reported_speed_mps: 30.0

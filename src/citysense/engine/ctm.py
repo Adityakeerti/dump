@@ -25,6 +25,7 @@ class NativeCTMEngine(EngineAdapter):
         lanes: np.ndarray | None = None,
         cell_length: np.ndarray | None = None,
         signal_controlled_cells: dict[int, tuple[int, int]] | None = None,
+        source_demand_weights: np.ndarray | None = None,
     ) -> None:
         self.config = config
         self.dt = config.dt
@@ -57,6 +58,27 @@ class NativeCTMEngine(EngineAdapter):
 
         self.source_mask = self.upstream_cells < 0
         self.sink_mask = self.downstream_cells < 0
+
+        # Per-source demand multipliers (e.g. cross streets carry a fraction of arterial demand); default 1.
+        if source_demand_weights is not None:
+            self.source_weights = source_demand_weights.astype(np.float64)
+        else:
+            self.source_weights = np.ones(n_cells, dtype=np.float64)
+
+        # Vectorised signal gating: which transfers (cell -> downstream) and which sink exits a phase can block.
+        self._src_indices = np.where(~self.sink_mask)[0]
+        self._dst_indices = self.downstream_cells[self._src_indices]
+        ctrl = self.signal_controlled_cells
+        pos = [i for i, c in enumerate(self._src_indices) if int(c) in ctrl]
+        self._gate_pos = np.array(pos, dtype=np.int64)
+        self._gate_jid = np.array([ctrl[int(self._src_indices[i])][0] for i in pos], dtype=np.int64)
+        self._gate_phase = np.array([ctrl[int(self._src_indices[i])][1] for i in pos], dtype=np.int64)
+        self._sinks = np.where(self.sink_mask)[0]
+        sink_pos = [i for i, c in enumerate(self._sinks) if int(c) in ctrl]
+        self._sink_gate_pos = np.array(sink_pos, dtype=np.int64)
+        self._sink_gate_jid = np.array([ctrl[int(self._sinks[i])][0] for i in sink_pos], dtype=np.int64)
+        self._sink_gate_phase = np.array([ctrl[int(self._sinks[i])][1] for i in sink_pos], dtype=np.int64)
+        self._sources = np.where(self.source_mask)[0]
 
         self.rng = np.random.default_rng(config.test_steps)
         self._init_state()
@@ -143,19 +165,16 @@ class NativeCTMEngine(EngineAdapter):
         in_transfer = np.zeros(n_transfers, dtype=np.float64)
         out_transfer = np.zeros(n_transfers, dtype=np.float64)
 
-        has_downstream = ~self.sink_mask
-        src_indices = np.where(has_downstream)[0]
-        dst_indices = self.downstream_cells[src_indices]
+        src_indices = self._src_indices
+        dst_indices = self._dst_indices
 
-        # Compute signal mask
+        def phase_of(jids: np.ndarray) -> np.ndarray:
+            return np.array([self.signal_phases.get(int(j), 0) for j in jids], dtype=np.int64)
+
+        # Signal mask: a controlled approach transfers only while its phase is green.
         signal_mask = np.ones(len(src_indices), dtype=np.float64)
-        for idx in range(len(src_indices)):
-            src_cell = src_indices[idx]
-            if src_cell in self.signal_controlled_cells:
-                jid, allowed_phase = self.signal_controlled_cells[src_cell]
-                current_phase = self.signal_phases.get(jid, 0)
-                if current_phase != allowed_phase:
-                    signal_mask[idx] = 0.0
+        if len(self._gate_pos):
+            signal_mask[self._gate_pos] = (phase_of(self._gate_jid) == self._gate_phase).astype(np.float64)
 
         flow_potential = np.minimum(sending[src_indices], receiving[dst_indices])
         link_flow = flow_potential * signal_mask
@@ -169,22 +188,21 @@ class NativeCTMEngine(EngineAdapter):
         if self.demand_fn is not None:
             current_demand_rate = self.demand_fn(self.time_sec)
 
-        sources = np.where(self.source_mask)[0]
-        for src in sources:
-            self.entrance_buffer[src] += current_demand_rate * self.dt
-            max_enter = receiving[src] * self.dt
-            enter_count = min(self.entrance_buffer[src], max_enter)
-            self.entrance_buffer[src] -= enter_count
-            in_transfer[src] += enter_count
-            self.total_entered += enter_count
+        sources = self._sources
+        self.entrance_buffer[sources] += current_demand_rate * self.source_weights[sources] * self.dt
+        enter = np.minimum(self.entrance_buffer[sources], receiving[sources] * self.dt)
+        self.entrance_buffer[sources] -= enter
+        in_transfer[sources] += enter
+        self.total_entered += float(np.sum(enter))
 
-        # Handle exits at sinks
-        sinks = np.where(self.sink_mask)[0]
-        for snk in sinks:
-            exit_rate = np.minimum(sending[snk], q_eff[snk] * self.lanes[snk])
-            exit_count = exit_rate * self.dt
-            out_transfer[snk] += exit_count
-            self.total_exited += exit_count
+        # Handle exits at sinks; a signal-controlled sink (an approach whose turn movement leaves the model)
+        # only discharges on its green phase.
+        sinks = self._sinks
+        exit_count = np.minimum(sending[sinks], q_eff[sinks] * self.lanes[sinks]) * self.dt
+        if len(self._sink_gate_pos):
+            exit_count[self._sink_gate_pos] *= (phase_of(self._sink_gate_jid) == self._sink_gate_phase)
+        out_transfer[sinks] += exit_count
+        self.total_exited += float(np.sum(exit_count))
 
         # Update vehicle counts and densities
         self.vehicles += in_transfer - out_transfer

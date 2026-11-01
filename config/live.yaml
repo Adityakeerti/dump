@@ -1,0 +1,69 @@
+# Live digital-twin service: streams the CTM corridor while RL and baseline controllers drive the signals.
+host: "127.0.0.1"
+port: 8003
+tick_interval_sec: 0.25          # wall-clock seconds between broadcasts
+default_steps_per_tick: 4        # simulated seconds advanced per tick (dt = 1 s) -> 16x real time
+speed_options: [1, 2, 4, 8, 16]
+autoplay: true
+default_policy: "DoubleDQN"
+default_scenario: "downstream_spillback"
+episode_seed_increment: 1
+# Background (non-agent) traffic = demand.yaml profile x this factor; LLM people clusters add trips on top.
+background_demand_factor: 0.5
+# Online DQN learning: epsilon for episode e = max(rl.epsilon_end, rl.epsilon_start * epsilon_episode_decay^e).
+learn_online_default: true
+epsilon_episode_decay: 0.7
+epsilon_preview_episodes: 12      # upcoming epsilon values shown on the dashboard
+checkpoint_path: "outputs/live/dqn_live.pt"
+episodes_path: "outputs/live/episodes.json"
+episode_history_size: 200
+event_log_size: 500
+# Jam events: a link is jammed when >= jam_min_cells cells are below diagnosis.congestion_speed_factor
+# for jam_confirm_sec; it clears after jam_clear_sec without that (filters red-light stop-line queues).
+jam_min_cells: 2
+jam_confirm_sec: 15.0
+jam_clear_sec: 20.0
+decision_log_size: 400
+recent_window_steps: 60          # window for the live explore-rate gauge
+max_active_platoons: 300         # car-cluster tracers per policy run
+max_trips_per_request: 50
+max_vehicles_per_trip: 60.0
+max_trip_delay_sec: 3600.0
+# Root-cause tracing of a live congestion point (citysense.live.diagnose).
+diagnosis_window_sec: 900.0      # sensor observations / phase history kept per run
+snapshot_every_steps: 20         # engine snapshots for counterfactual replays
+diagnosis_lead_sec: 60.0         # replay starts this long before the jam's first congested observation
+diagnosis_min_jam_age_sec: 180.0  # jams younger than this are not traced (effects too small to rank)
+diagnosis_forward_sec: 600.0      # rehearse this far past "now" in every counterfactual rung
+diagnosis_horizon_max_sec: 1500.0
+diagnosis_min_effect_vhr: 0.25    # below this, the ladder's verdict is "inconclusive"
+diagnosis_replicates: 5          # demand-perturbation replicates per counterfactual rung
+diagnosis_evidence_limit: 12
+diagnosis_max_origin_candidates: 4  # bottleneck candidates tested with their own capacity-restore replay
+diagnosis_surge_ratio: 1.5        # an entry's trip rate this many times its earlier rate counts as a surge
+history_size: 360                # rows kept per policy for the time-space heatmap
+history_sample_every_steps: 5
+precision_digits: 3
+default_events_limit: 100
+cors_origins: ["*"]
+# Real-street drawing of the corridor (built once from OpenStreetMap by scripts/build_street_geometry.py).
+# null, or a missing file, falls back to the schematic layout below. Physics are unaffected either way.
+street_geometry_path: "config/street_geometry.json"
+# Optional visual anchor for the map only (does not change physics or the config hash).
+# null = use network.yaml center_lat/center_lon. Set to Dehradun (Clock Tower) to sit beside the
+# CitySense complaint data and population clusters. The corridor drawn there is schematic, not real roads.
+map_center_lat: 30.3244
+map_center_lon: 78.0419
+paths:
+  health: "/api/twin/health"
+  topology: "/api/twin/topology"
+  state: "/api/twin/state"
+  events: "/api/twin/events"
+  control: "/api/twin/control"
+  stream: "/api/twin/stream"
+  trips: "/api/twin/trips"
+  decisions: "/api/twin/decisions"
+  episodes: "/api/twin/episodes"
+  platoons: "/api/twin/platoons"
+  diagnose: "/api/twin/diagnose"
+  diagnosis_mount: "/api/twin/diagnosis"

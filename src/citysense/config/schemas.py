@@ -81,9 +81,13 @@ class NetworkConfig(StrictBaseModel):
     signal_cycle_time: float
     green_fraction: float
     min_cell_length: float
+    # Side-road legs per junction (1 = T-junction, 2 = four-way) and cells per leg (None = num_cells_per_link).
+    cross_street_legs: int = 1
+    cross_cells_per_leg: int | None = None
 
     @field_validator(
         "radius_m",
+        "cross_street_legs",
         "num_signalized_junctions",
         "num_cells_per_link",
         "lanes",
@@ -150,6 +154,7 @@ class ObservationConfig(StrictBaseModel):
     reporting_interval_sec: float
     noise_type: str
     noise_std: float
+    flow_noise_rel: float = 0.0  # relative Gaussian noise on reported flow (loop detectors miscount too)
     dropout_fraction: float
     min_reported_speed_mps: float
     max_reported_speed_mps: float

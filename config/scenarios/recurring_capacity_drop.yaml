@@ -3,7 +3,7 @@ scenario_type: "recurring_capacity_drop"
 description: "Periodic bottleneck recurring on set weekdays during morning/evening peak"
 start_time_sec: 300.0
 end_time_sec: 900.0
-target_cell_id: 15
+target_cell_id: 47
 upstream_junction_cell_id: -1
 capacity_factor: 0.4
 demand_shift_sec: 0.0

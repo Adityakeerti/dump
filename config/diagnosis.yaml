@@ -5,7 +5,7 @@ spatial_scale_m: 15.0
 temporal_scale_s: 5.0
 wave_speed_theoretical_mps: 5.56
 wave_speed_tolerance_mps: 1.5
-capacity_fit_min_samples: 10
+capacity_fit_min_samples: 6   # congested readings only (see CapacityEstimator.fit_capacity); 6 = 30 s of queued discharge
 change_point_penalty: 2.0
 change_point_min_size: 5
 confidence_min: 0.1

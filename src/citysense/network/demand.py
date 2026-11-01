@@ -23,7 +23,8 @@ class CorridorDemand:
 
         # Linear warmup phase
         if time_sec < self.config.warmup_duration_sec:
-            warmup_ratio = time_sec / self.config.warmup_duration_sec
+            # Clamp: a negative time (e.g. a caller shifting t backwards) must never yield negative demand.
+            warmup_ratio = max(0.0, time_sec) / self.config.warmup_duration_sec
             return self.config.base_flow_veh_per_sec * self.day_factor * warmup_ratio
 
         # Peak hours window

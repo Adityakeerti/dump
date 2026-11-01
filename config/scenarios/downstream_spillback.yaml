@@ -3,8 +3,8 @@ scenario_type: "downstream_spillback"
 description: "Downstream constriction generating backward-propagating shockwave that blocks upstream intersection"
 start_time_sec: 200.0
 end_time_sec: 1000.0
-target_cell_id: 30
-upstream_junction_cell_id: 18
+target_cell_id: 78
+upstream_junction_cell_id: 63
 capacity_factor: 0.25
 demand_shift_sec: 0.0
 decay_rate_per_step: 0.0
